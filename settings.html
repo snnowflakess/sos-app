@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Settings</title>
+
+<link rel="stylesheet" href="style.css">
+
+<style>
+.settings-container{
+padding:20px;
+padding-bottom:110px;
+min-height:100vh;
+background:var(--bg-main);
+transition:background-color .4s ease,color .4s ease;
+}
+
+.setting-card{
+background:var(--card-bg);
+border-radius:16px;
+padding:16px;
+margin-bottom:15px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+gap:14px;
+box-shadow:var(--shadow-soft);
+border:1px solid var(--border-soft);
+transition:
+background-color .4s ease,
+color .4s ease,
+border-color .4s ease,
+box-shadow .4s ease;
+}
+
+.setting-left{
+display:flex;
+flex-direction:column;
+gap:4px;
+}
+
+.setting-title{
+font-size:16px;
+font-weight:600;
+color:var(--text-main);
+transition:color .4s ease;
+}
+
+.setting-sub{
+font-size:12px;
+color:var(--text-soft);
+transition:color .4s ease;
+}
+
+.setting-btn{
+background:var(--button-bg);
+color:var(--text-main);
+border:none;
+padding:10px 14px;
+border-radius:10px;
+cursor:pointer;
+transition:background-color .4s ease,color .4s ease,transform .2s ease;
+}
+
+.setting-btn:active{
+transform:scale(.97);
+}
+
+.toggle{
+width:54px;
+height:30px;
+background:#555;
+border-radius:999px;
+position:relative;
+cursor:pointer;
+transition:background .3s ease,transform .2s ease;
+flex-shrink:0;
+}
+
+.toggle:active{
+transform:scale(.97);
+}
+
+.toggle::after{
+content:"";
+position:absolute;
+top:4px;
+left:4px;
+width:22px;
+height:22px;
+border-radius:50%;
+background:white;
+transition:left .3s ease;
+}
+
+.toggle.active{
+background:#00c853;
+}
+
+.toggle.active::after{
+left:28px;
+}
+
+.setting-select{
+background:var(--input-bg);
+color:var(--text-main);
+border:1px solid var(--border-soft);
+padding:9px 10px;
+border-radius:10px;
+outline:none;
+transition:background-color .4s ease,color .4s ease,border-color .4s ease;
+}
+
+.logout-btn{
+width:100%;
+padding:14px;
+margin-top:8px;
+border:none;
+border-radius:12px;
+background:#ff3b3b;
+color:white;
+font-size:16px;
+font-weight:600;
+cursor:pointer;
+box-shadow:0 10px 20px rgba(255,59,59,0.2);
+}
+
+.logout-btn:active{
+transform:scale(.98);
+}
+
+/* CONTACTS MODAL */
+
+.modal-overlay{
+position:fixed;
+inset:0;
+background:rgba(0,0,0,0.55);
+opacity:0;
+pointer-events:none;
+transition:.3s ease;
+z-index:40;
+}
+
+.modal-overlay.show{
+opacity:1;
+pointer-events:auto;
+}
+
+.contacts-modal{
+position:fixed;
+left:0;
+right:0;
+bottom:0;
+background:var(--card-bg);
+border-top-left-radius:24px;
+border-top-right-radius:24px;
+padding:18px 18px 24px;
+transform:translateY(100%);
+transition:.35s ease, background-color .4s ease, color .4s ease;
+z-index:50;
+box-shadow:0 -10px 30px rgba(0,0,0,0.45);
+max-height:88vh;
+overflow-y:auto;
+border-top:1px solid var(--border-soft);
+}
+
+.contacts-modal.show{
+transform:translateY(0);
+}
+
+.drag-line{
+width:54px;
+height:5px;
+border-radius:999px;
+background:#4c4c4c;
+margin:0 auto 16px;
+}
+
+.modal-title{
+font-size:20px;
+font-weight:700;
+text-align:center;
+margin-bottom:16px;
+color:var(--text-main);
+}
+
+.contact-list{
+display:flex;
+flex-direction:column;
+gap:12px;
+margin-bottom:16px;
+}
+
+.contact-item{
+background:var(--bg-main);
+border:1px solid var(--border-soft);
+border-radius:16px;
+padding:14px;
+display:flex;
+justify-content:space-between;
+align-items:flex-start;
+gap:12px;
+transition:background-color .4s ease,color .4s ease,border-color .4s ease;
+}
+
+.contact-main{
+display:flex;
+flex-direction:column;
+gap:4px;
+flex:1;
+}
+
+.contact-name{
+font-size:15px;
+font-weight:700;
+color:var(--text-main);
+}
+
+.contact-meta{
+font-size:13px;
+color:var(--text-soft);
+}
+
+.primary-badge{
+display:inline-block;
+margin-top:4px;
+padding:4px 8px;
+border-radius:999px;
+background:#00c853;
+color:white;
+font-size:11px;
+width:fit-content;
+}
+
+.contact-actions{
+display:flex;
+gap:8px;
+flex-shrink:0;
+}
+
+.small-btn{
+border:none;
+padding:8px 10px;
+border-radius:10px;
+cursor:pointer;
+font-size:13px;
+}
+
+.edit-contact-btn{
+background:#2979ff;
+color:white;
+}
+
+.delete-contact-btn{
+background:#ff3b3b;
+color:white;
+}
+
+.primary-contact-btn{
+background:var(--button-bg);
+color:var(--text-main);
+}
+
+.form-box{
+background:var(--bg-main);
+border:1px solid var(--border-soft);
+border-radius:18px;
+padding:14px;
+margin-top:10px;
+}
+
+.form-title{
+font-size:16px;
+font-weight:700;
+margin-bottom:12px;
+color:var(--text-main);
+}
+
+.form-group{
+margin-bottom:12px;
+}
+
+.form-label{
+display:block;
+font-size:13px;
+color:var(--text-soft);
+margin-bottom:6px;
+}
+
+.form-input{
+width:100%;
+padding:12px 14px;
+border-radius:12px;
+border:1px solid var(--border-soft);
+background:var(--input-bg);
+color:var(--text-main);
+font-size:14px;
+outline:none;
+transition:background-color .4s ease,color .4s ease,border-color .4s ease;
+}
+
+.form-input:focus{
+border-color:#2f80ff;
+box-shadow:0 0 0 3px rgba(47,128,255,0.14);
+}
+
+.modal-actions{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:10px;
+margin-top:6px;
+}
+
+.cancel-btn,
+.save-btn,
+.add-btn{
+border:none;
+padding:13px;
+border-radius:12px;
+font-size:15px;
+font-weight:600;
+cursor:pointer;
+}
+
+.cancel-btn{
+background:var(--button-bg);
+color:var(--text-main);
+}
+
+.save-btn{
+background:linear-gradient(145deg,#ff4b4b,#d60000);
+color:white;
+}
+
+.add-btn{
+width:100%;
+background:linear-gradient(145deg,#2f80ff,#1a5ed8);
+color:white;
+margin-top:6px;
+}
+
+.empty-text{
+text-align:center;
+font-size:14px;
+color:var(--text-soft);
+padding:10px 0 6px;
+}
+
+.toast{
+position:fixed;
+left:50%;
+bottom:110px;
+transform:translateX(-50%) translateY(20px);
+background:rgba(0,200,83,0.95);
+color:white;
+padding:12px 18px;
+border-radius:999px;
+font-size:14px;
+opacity:0;
+pointer-events:none;
+transition:.3s ease;
+z-index:60;
+box-shadow:0 8px 20px rgba(0,0,0,0.35);
+}
+
+.toast.show{
+opacity:1;
+transform:translateX(-50%) translateY(0);
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<header class="header">
+  <h2>⚙️ Settings</h2>
+</header>
+
+<div class="settings-container">
+
+  <div class="setting-card">
+    <div class="setting-left">
+      <div class="setting-title">Profile</div>
+      <div class="setting-sub">Open and manage your profile</div>
+    </div>
+    <button class="setting-btn" onclick="goProfile()">Open</button>
+  </div>
+
+  <div class="setting-card">
+    <div class="setting-left">
+      <div class="setting-title">Emergency Contacts</div>
+      <div class="setting-sub">Manage people notified during SOS</div>
+    </div>
+    <button class="setting-btn" onclick="openContactsModal()">Manage</button>
+  </div>
+
+  <div class="setting-card">
+    <div class="setting-left">
+      <div class="setting-title">SOS Hold Time</div>
+      <div class="setting-sub">Time required to trigger SOS</div>
+    </div>
+    <select class="setting-select" id="holdTimeSelect">
+      <option>2 seconds</option>
+      <option selected>3 seconds</option>
+      <option>5 seconds</option>
+    </select>
+  </div>
+
+  <div class="setting-card">
+    <div class="setting-left">
+      <div class="setting-title">Alert Sound</div>
+      <div class="setting-sub">Play a test sound when enabled</div>
+    </div>
+    <div class="toggle" id="soundToggle" onclick="toggleAlertSound()"></div>
+  </div>
+
+  <div class="setting-card">
+    <div class="setting-left">
+      <div class="setting-title">Live Location Sharing</div>
+      <div class="setting-sub">Send location during SOS</div>
+    </div>
+    <div class="toggle" id="locationToggle" onclick="toggleSimple(this, 'liveLocation')"></div>
+  </div>
+
+  <div class="setting-card">
+    <div class="setting-left">
+      <div class="setting-title">Dark Mode</div>
+      <div class="setting-sub">Switch app theme smoothly</div>
+    </div>
+    <div class="toggle" id="themeToggle" onclick="toggleTheme()"></div>
+  </div>
+
+  <button class="logout-btn" onclick="logout()">Logout</button>
+
+</div>
+
+<div class="modal-overlay" id="contactsOverlay" onclick="closeContactsModal()"></div>
+
+<div class="contacts-modal" id="contactsModal">
+  <div class="drag-line"></div>
+  <div class="modal-title">Emergency Contacts</div>
+
+  <div class="contact-list" id="contactList"></div>
+
+  <button class="add-btn" onclick="startAddContact()">+ Add Contact</button>
+
+  <div class="form-box" id="contactFormBox" style="display:none;">
+    <div class="form-title" id="formTitle">Add Contact</div>
+
+    <div class="form-group">
+      <label class="form-label">Name</label>
+      <input type="text" class="form-input" id="contactName" placeholder="Enter contact name">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Phone Number</label>
+      <input type="tel" class="form-input" id="contactPhone" placeholder="Enter phone number">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Relationship</label>
+      <input type="text" class="form-input" id="contactRelation" placeholder="Mom, Dad, Friend...">
+    </div>
+
+    <div class="modal-actions">
+      <button class="cancel-btn" onclick="cancelContactForm()">Cancel</button>
+      <button class="save-btn" onclick="saveContact()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">Saved</div>
+
+<div class="fan-container" id="fanMenu">
+  <button class="fan-item profile" onclick="goProfile()">👤</button>
+  <button class="fan-item settings" onclick="goSettings()">⚙️</button>
+</div>
+
+<footer class="footer">
+  <button onclick="goHome()">🏠</button>
+  <button onclick="goVolunteers()">🤝</button>
+  <button id="menuButton">☰</button>
+</footer>
+
+</div>
+
+<script>
+function applySavedTheme(){
+  const savedTheme = localStorage.getItem("theme") || "dark";
+  if(savedTheme === "light"){
+    document.body.classList.add("light-mode");
+  }else{
+    document.body.classList.remove("light-mode");
+  }
+}
+
+applySavedTheme();
+
+function playTingSound(){
+  const audio = new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
+  audio.volume = 0.8;
+  audio.play().catch(()=>{});
+}
+
+function toggleAlertSound(){
+  const soundToggle = document.getElementById("soundToggle");
+  soundToggle.classList.toggle("active");
+
+  const enabled = soundToggle.classList.contains("active");
+  localStorage.setItem("alertSound", enabled ? "on" : "off");
+
+  if(enabled){
+    playTingSound();
+  }
+}
+
+function toggleSimple(el, key){
+  el.classList.toggle("active");
+  const enabled = el.classList.contains("active");
+  localStorage.setItem(key, enabled ? "on" : "off");
+}
+
+function toggleTheme(){
+  const themeToggle = document.getElementById("themeToggle");
+  const isCurrentlyDark = !document.body.classList.contains("light-mode");
+
+  if(isCurrentlyDark){
+    document.body.classList.add("light-mode");
+    localStorage.setItem("theme","light");
+    themeToggle.classList.remove("active");
+  }else{
+    document.body.classList.remove("light-mode");
+    localStorage.setItem("theme","dark");
+    themeToggle.classList.add("active");
+  }
+}
+
+function applySavedSettings(){
+  const savedSound = localStorage.getItem("alertSound");
+  const savedTheme = localStorage.getItem("theme") || "dark";
+  const savedLocation = localStorage.getItem("liveLocation");
+  const savedHoldTime = localStorage.getItem("holdTime");
+
+  const soundToggle = document.getElementById("soundToggle");
+  const themeToggle = document.getElementById("themeToggle");
+  const locationToggle = document.getElementById("locationToggle");
+  const holdTimeSelect = document.getElementById("holdTimeSelect");
+
+  if(savedTheme === "light"){
+    document.body.classList.add("light-mode");
+    themeToggle.classList.remove("active");
+  }else{
+    document.body.classList.remove("light-mode");
+    themeToggle.classList.add("active");
+  }
+
+  if(savedSound === "on"){
+    soundToggle.classList.add("active");
+  }else{
+    soundToggle.classList.remove("active");
+  }
+
+  if(savedLocation === "on"){
+    locationToggle.classList.add("active");
+  }else{
+    locationToggle.classList.remove("active");
+  }
+
+  if(savedHoldTime){
+    holdTimeSelect.value = savedHoldTime;
+  }
+}
+
+document.getElementById("holdTimeSelect").addEventListener("change", function(){
+  localStorage.setItem("holdTime", this.value);
+});
+
+/* CONTACTS LOGIC */
+
+let contacts = JSON.parse(localStorage.getItem("emergencyContacts")) || [];
+let editingIndex = -1;
+
+function saveContactsToStorage(){
+  localStorage.setItem("emergencyContacts", JSON.stringify(contacts));
+}
+
+function showToast(message){
+  const toast = document.getElementById("toast");
+  toast.innerText = message;
+  toast.classList.add("show");
+
+  setTimeout(()=>{
+    toast.classList.remove("show");
+  }, 2200);
+}
+
+function openContactsModal(){
+  document.getElementById("contactsOverlay").classList.add("show");
+  document.getElementById("contactsModal").classList.add("show");
+  renderContacts();
+}
+
+function closeContactsModal(){
+  document.getElementById("contactsOverlay").classList.remove("show");
+  document.getElementById("contactsModal").classList.remove("show");
+  cancelContactForm();
+}
+
+function renderContacts(){
+  const list = document.getElementById("contactList");
+  list.innerHTML = "";
+
+  if(contacts.length === 0){
+    list.innerHTML = `<div class="empty-text">No emergency contacts added yet.</div>`;
+    return;
+  }
+
+  contacts.forEach((contact, index) => {
+    list.innerHTML += `
+      <div class="contact-item">
+        <div class="contact-main">
+          <div class="contact-name">${contact.name}</div>
+          <div class="contact-meta">${contact.relation} • ${contact.phone}</div>
+          ${contact.primary ? '<span class="primary-badge">Primary Contact</span>' : ''}
+        </div>
+
+        <div class="contact-actions">
+          <button class="small-btn primary-contact-btn" onclick="makePrimary(${index})">★</button>
+          <button class="small-btn edit-contact-btn" onclick="editContact(${index})">Edit</button>
+          <button class="small-btn delete-contact-btn" onclick="deleteContact(${index})">Delete</button>
+        </div>
+      </div>
+    `;
+  });
+}
+
+function startAddContact(){
+  editingIndex = -1;
+  document.getElementById("formTitle").innerText = "Add Contact";
+  document.getElementById("contactFormBox").style.display = "block";
+  document.getElementById("contactName").value = "";
+  document.getElementById("contactPhone").value = "";
+  document.getElementById("contactRelation").value = "";
+}
+
+function editContact(index){
+  editingIndex = index;
+  const contact = contacts[index];
+
+  document.getElementById("formTitle").innerText = "Edit Contact";
+  document.getElementById("contactFormBox").style.display = "block";
+  document.getElementById("contactName").value = contact.name;
+  document.getElementById("contactPhone").value = contact.phone;
+  document.getElementById("contactRelation").value = contact.relation;
+}
+
+function cancelContactForm(){
+  editingIndex = -1;
+  document.getElementById("contactFormBox").style.display = "none";
+  document.getElementById("contactName").value = "";
+  document.getElementById("contactPhone").value = "";
+  document.getElementById("contactRelation").value = "";
+}
+
+function saveContact(){
+  const name = document.getElementById("contactName").value.trim();
+  const phone = document.getElementById("contactPhone").value.trim();
+  const relation = document.getElementById("contactRelation").value.trim();
+
+  if(!name || !phone || !relation){
+    showToast("Fill all contact details");
+    return;
+  }
+
+  if(editingIndex === -1){
+    contacts.push({
+      name,
+      phone,
+      relation,
+      primary: contacts.length === 0
+    });
+    showToast("Contact added");
+  }else{
+    const wasPrimary = contacts[editingIndex].primary;
+    contacts[editingIndex] = {
+      name,
+      phone,
+      relation,
+      primary: wasPrimary
+    };
+    showToast("Contact updated");
+  }
+
+  saveContactsToStorage();
+  renderContacts();
+  cancelContactForm();
+}
+
+function deleteContact(index){
+  const wasPrimary = contacts[index].primary;
+  contacts.splice(index, 1);
+
+  if(wasPrimary && contacts.length > 0){
+    contacts[0].primary = true;
+  }
+
+  saveContactsToStorage();
+  renderContacts();
+  showToast("Contact deleted");
+}
+
+function makePrimary(index){
+  contacts = contacts.map((contact, i) => ({
+    ...contact,
+    primary: i === index
+  }));
+
+  saveContactsToStorage();
+  renderContacts();
+  showToast("Primary contact updated");
+}
+
+/* NAVIGATION */
+
+function logout(){
+  localStorage.clear();
+  window.location.href = "login.html";
+}
+
+function goHome(){
+  window.location.href = "index.html";
+}
+
+function goVolunteers(){
+  window.location.href = "volunteers.html";
+}
+
+function goProfile(){
+  window.location.href = "profile.html";
+}
+
+function goSettings(){
+  window.location.href = "settings.html";
+}
+
+const menuButton = document.getElementById("menuButton");
+const fanMenu = document.getElementById("fanMenu");
+
+menuButton.addEventListener("click", ()=>{
+  fanMenu.classList.toggle("active");
+});
+
+applySavedSettings();
+</script>
+</body>
+</html>

@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>People Needing Help Nearby</title>
+
+<script>
+(function(){
+  const savedTheme = localStorage.getItem("theme") || "dark";
+  if(savedTheme === "light"){
+    document.documentElement.classList.add("light-preload");
+  }
+})();
+</script>
+
+<link rel="stylesheet" href="style.css">
+
+<style>
+.volunteer-page{
+padding:20px;
+padding-bottom:110px;
+min-height:100vh;
+background:var(--bg-main);
+transition:background-color .4s ease,color .4s ease;
+}
+
+.search-box{
+width:100%;
+padding:12px;
+border-radius:10px;
+border:none;
+margin-bottom:20px;
+font-size:16px;
+background:var(--input-bg);
+color:var(--text-main);
+transition:background-color .4s ease,color .4s ease;
+}
+
+.volunteer-card{
+background:var(--card-bg);
+border-radius:16px;
+padding:15px;
+display:flex;
+align-items:center;
+justify-content:space-between;
+margin-bottom:15px;
+box-shadow:var(--shadow-soft);
+transition:background-color .4s ease,color .4s ease,box-shadow .4s ease;
+}
+
+.volunteer-left{
+display:flex;
+align-items:center;
+gap:12px;
+}
+
+.avatar{
+width:48px;
+height:48px;
+border-radius:50%;
+background:#ff3b3b;
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:20px;
+color:white;
+}
+
+.volunteer-info h3{
+font-size:16px;
+color:var(--text-main);
+transition:color .4s ease;
+}
+
+.volunteer-info p{
+font-size:13px;
+color:var(--text-soft);
+transition:color .4s ease;
+}
+
+.status{
+width:10px;
+height:10px;
+background:#ff0000;
+border-radius:50%;
+display:inline-block;
+margin-left:6px;
+}
+
+.volunteer-actions{
+display:flex;
+align-items:center;
+gap:8px;
+}
+
+.volunteer-actions button{
+padding:8px 12px;
+border:none;
+border-radius:8px;
+cursor:pointer;
+font-size:14px;
+}
+
+.call-btn{
+background:#00c853;
+color:white;
+}
+
+.loc-btn{
+background:#2979ff;
+color:white;
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<header class="header">
+  <h2>🚨 People Needing Help Nearby</h2>
+</header>
+
+<div class="volunteer-page">
+  <input 
+    type="text" 
+    class="search-box" 
+    placeholder="Search people..."
+    onkeyup="searchPeople()"
+    id="searchInput">
+
+  <div id="volunteerList"></div>
+</div>
+
+<div class="fan-container" id="fanMenu">
+  <button class="fan-item profile" onclick="goProfile()">👤</button>
+  <button class="fan-item settings" onclick="goSettings()">⚙️</button>
+</div>
+
+<footer class="footer">
+  <button onclick="goHome()">🏠</button>
+  <button onclick="goVolunteers()">🤝</button>
+  <button id="menuButton">☰</button>
+</footer>
+
+</div>
+
+<script>
+function applySavedTheme(){
+  const savedTheme = localStorage.getItem("theme") || "dark";
+  if(savedTheme === "light"){
+    document.body.classList.add("light-mode");
+  }else{
+    document.body.classList.remove("light-mode");
+  }
+}
+
+applySavedTheme();
+
+let userLat;
+let userLon;
+
+const helpRequests=[
+  {name:"Rahul Sharma",phone:"9876543210",lat:28.6139,lon:77.2090},
+  {name:"Ananya Verma",phone:"9812345678",lat:28.6200,lon:77.2105},
+  {name:"Karan Mehta",phone:"9898989898",lat:28.6100,lon:77.2150},
+  {name:"Priya Singh",phone:"9871234567",lat:28.6085,lon:77.2005}
+];
+
+navigator.geolocation.getCurrentPosition(pos=>{
+  userLat=pos.coords.latitude;
+  userLon=pos.coords.longitude;
+  renderRequests();
+},()=>{
+  renderRequests();
+});
+
+function getDistance(lat1,lon1,lat2,lon2){
+  const R=6371;
+  let dLat=(lat2-lat1)*Math.PI/180;
+  let dLon=(lon2-lon1)*Math.PI/180;
+
+  let a=
+    Math.sin(dLat/2)*Math.sin(dLat/2)+
+    Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*
+    Math.sin(dLon/2)*Math.sin(dLon/2);
+
+  let c=2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+  return (R*c).toFixed(2);
+}
+
+function renderRequests(){
+  let container=document.getElementById("volunteerList");
+  container.innerHTML="";
+
+  helpRequests.forEach(p=>{
+    let distance = (userLat && userLon) ? getDistance(userLat,userLon,p.lat,p.lon) : "Unknown";
+
+    container.innerHTML += `
+      <div class="volunteer-card">
+        <div class="volunteer-left">
+          <div class="avatar">🚨</div>
+          <div class="volunteer-info">
+            <h3>${p.name} <span class="status"></span></h3>
+            <p>${distance} km away</p>
+          </div>
+        </div>
+
+        <div class="volunteer-actions">
+          <button class="call-btn" onclick="callUser('${p.phone}')">📞</button>
+          <button class="loc-btn" onclick="openDirections(${p.lat},${p.lon})">🧭</button>
+        </div>
+      </div>
+    `;
+  });
+}
+
+function callUser(phone){
+  window.location.href="tel:"+phone;
+}
+
+function openDirections(lat,lon){
+  window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`);
+}
+
+function searchPeople(){
+  let input=document.getElementById("searchInput").value.toLowerCase();
+  let cards=document.getElementsByClassName("volunteer-card");
+
+  for(let i=0;i<cards.length;i++){
+    let name=cards[i].innerText.toLowerCase();
+    cards[i].style.display = name.includes(input) ? "flex" : "none";
+  }
+}
+
+function goHome(){
+  window.location.href="index.html";
+}
+
+function goVolunteers(){
+  window.location.href="volunteers.html";
+}
+
+function goProfile(){
+  window.location.href="profile.html";
+}
+
+function goSettings(){
+  window.location.href="settings.html";
+}
+
+const menuButton = document.getElementById("menuButton");
+const fanMenu = document.getElementById("fanMenu");
+
+menuButton.addEventListener("click",()=>{
+  fanMenu.classList.toggle("active");
+});
+</script>
+</body>
+</html>

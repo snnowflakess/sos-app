@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Community Emergency Platform</title>
+
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+body.sos-active{
+overflow:hidden;
+}
+
+.sos-wrapper{
+position:absolute;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+display:flex;
+justify-content:center;
+align-items:center;
+z-index:20;
+pointer-events:none;
+}
+
+.radar{
+position:absolute;
+width:260px;
+height:260px;
+border-radius:50%;
+background:radial-gradient(circle, rgba(255,0,0,0.18) 0%, rgba(255,0,0,0.08) 45%, rgba(255,0,0,0) 72%);
+animation:radarPulse 2.2s infinite;
+pointer-events:none;
+z-index:1;
+filter:blur(1px);
+}
+
+@keyframes radarPulse{
+0%{
+transform:scale(.58);
+opacity:.72;
+}
+70%{
+transform:scale(1.3);
+opacity:0;
+}
+100%{
+transform:scale(1.34);
+opacity:0;
+}
+}
+
+.sos-button{
+position:relative;
+z-index:25;
+pointer-events:auto;
+width:170px;
+height:170px;
+border-radius:50%;
+border:1px solid rgba(255,255,255,0.12);
+font-size:34px;
+font-weight:800;
+letter-spacing:1px;
+color:white;
+background:radial-gradient(circle at top, #ff8686 0%, #ff3b3b 38%, #d60000 100%);
+cursor:pointer;
+box-shadow:
+0 0 24px rgba(255,59,59,0.35),
+0 0 55px rgba(255,0,0,0.12),
+0 18px 35px rgba(0,0,0,0.28);
+touch-action:manipulation;
+animation:sosIdlePulse 2.2s infinite ease-in-out;
+}
+
+@keyframes sosIdlePulse{
+0%{
+transform:scale(1);
+box-shadow:
+0 0 24px rgba(255,59,59,0.35),
+0 0 55px rgba(255,0,0,0.12),
+0 18px 35px rgba(0,0,0,0.28);
+}
+50%{
+transform:scale(1.035);
+box-shadow:
+0 0 34px rgba(255,59,59,0.52),
+0 0 75px rgba(255,0,0,0.2),
+0 20px 40px rgba(0,0,0,0.32);
+}
+100%{
+transform:scale(1);
+box-shadow:
+0 0 24px rgba(255,59,59,0.35),
+0 0 55px rgba(255,0,0,0.12),
+0 18px 35px rgba(0,0,0,0.28);
+}
+}
+
+.sos-button:active{
+transform:scale(.98);
+}
+
+.sos-button.emergency-mode{
+animation:sosEmergencyPulse .65s infinite;
+}
+
+@keyframes sosEmergencyPulse{
+0%{
+transform:scale(1);
+box-shadow:
+0 0 30px rgba(255,59,59,0.48),
+0 0 70px rgba(255,0,0,0.18),
+0 18px 35px rgba(0,0,0,0.28);
+}
+50%{
+transform:scale(1.08);
+box-shadow:
+0 0 52px rgba(255,59,59,0.75),
+0 0 100px rgba(255,0,0,0.3),
+0 20px 42px rgba(0,0,0,0.34);
+}
+100%{
+transform:scale(1);
+box-shadow:
+0 0 30px rgba(255,59,59,0.48),
+0 0 70px rgba(255,0,0,0.18),
+0 18px 35px rgba(0,0,0,0.28);
+}
+}
+
+.sos-stage{
+position:fixed;
+inset:0;
+display:flex;
+justify-content:center;
+align-items:center;
+background:rgba(0,0,0,0.62);
+opacity:0;
+pointer-events:none;
+z-index:100;
+transition:opacity .25s ease;
+overflow:hidden;
+padding:18px;
+}
+
+.sos-stage.show{
+opacity:1;
+pointer-events:auto;
+}
+
+.sos-fill{
+position:absolute;
+width:220px;
+height:220px;
+border-radius:50%;
+background:radial-gradient(circle, rgba(255,59,59,.45) 0%, rgba(255,0,0,.18) 45%, rgba(255,0,0,.08) 70%, rgba(255,0,0,0) 100%);
+transform:scale(0.4);
+opacity:0.9;
+}
+
+.sos-stage.show .sos-fill{
+animation:fillScreenPulse var(--fill-duration, 3s) linear forwards;
+}
+
+@keyframes fillScreenPulse{
+0%{
+transform:scale(0.4);
+opacity:0.95;
+}
+25%{
+transform:scale(2.2);
+opacity:0.88;
+}
+55%{
+transform:scale(5.5);
+opacity:0.75;
+}
+100%{
+transform:scale(10.5);
+opacity:0.58;
+}
+}
+
+.sos-panel{
+position:relative;
+z-index:2;
+width:min(92%, 360px);
+background:var(--card-bg);
+color:var(--text-main);
+border:1px solid var(--border-soft);
+border-radius:28px;
+padding:22px 18px;
+text-align:center;
+box-shadow:0 20px 50px rgba(0,0,0,0.35);
+backdrop-filter:var(--blur);
+-webkit-backdrop-filter:var(--blur);
+transition:background-color .35s ease,color .35s ease,border-color .35s ease;
+}
+
+.sos-title{
+font-size:24px;
+font-weight:800;
+margin-bottom:8px;
+}
+
+.sos-sub{
+font-size:14px;
+color:var(--text-soft);
+margin-bottom:16px;
+transition:color .35s ease;
+}
+
+.sos-count{
+font-size:64px;
+font-weight:900;
+line-height:1;
+color:#ff3b3b;
+margin-bottom:16px;
+}
+
+.sos-details{
+background:var(--bg-main);
+border:1px solid var(--border-soft);
+border-radius:18px;
+padding:12px;
+text-align:left;
+margin-top:14px;
+transition:background-color .35s ease,border-color .35s ease;
+}
+
+.sos-details-title{
+font-size:13px;
+font-weight:700;
+margin-bottom:8px;
+color:var(--text-main);
+}
+
+.sos-details-item{
+font-size:13px;
+color:var(--text-soft);
+margin-bottom:5px;
+transition:color .35s ease;
+}
+
+.sos-actions{
+margin-top:16px;
+display:flex;
+justify-content:center;
+}
+
+.cancel-sos-btn{
+border:none;
+padding:13px 18px;
+border-radius:14px;
+font-size:15px;
+font-weight:700;
+cursor:pointer;
+background:var(--button-bg);
+color:var(--text-main);
+transition:background-color .35s ease,color .35s ease,transform .2s ease;
+}
+
+.cancel-sos-btn:active{
+transform:scale(.97);
+}
+
+.success-modal{
+position:fixed;
+inset:0;
+display:flex;
+justify-content:center;
+align-items:center;
+background:rgba(0,0,0,0.55);
+opacity:0;
+pointer-events:none;
+z-index:120;
+transition:opacity .25s ease;
+padding:18px;
+}
+
+.success-modal.show{
+opacity:1;
+pointer-events:auto;
+}
+
+.success-card{
+width:min(92%, 380px);
+background:var(--card-bg);
+border:1px solid var(--border-soft);
+border-radius:28px;
+padding:22px 18px;
+box-shadow:0 20px 50px rgba(0,0,0,0.35);
+backdrop-filter:var(--blur);
+-webkit-backdrop-filter:var(--blur);
+transition:background-color .35s ease,color .35s ease,border-color .35s ease;
+}
+
+.success-icon{
+font-size:44px;
+text-align:center;
+margin-bottom:8px;
+}
+
+.success-title{
+font-size:23px;
+font-weight:800;
+text-align:center;
+margin-bottom:8px;
+color:var(--text-main);
+}
+
+.success-sub{
+font-size:14px;
+text-align:center;
+color:var(--text-soft);
+margin-bottom:16px;
+transition:color .35s ease;
+word-break:break-word;
+}
+
+.success-box{
+background:var(--bg-main);
+border:1px solid var(--border-soft);
+border-radius:18px;
+padding:12px;
+margin-bottom:12px;
+transition:background-color .35s ease,border-color .35s ease;
+}
+
+.success-box-title{
+font-size:13px;
+font-weight:700;
+margin-bottom:7px;
+color:var(--text-main);
+}
+
+.success-item{
+font-size:13px;
+color:var(--text-soft);
+margin-bottom:5px;
+transition:color .35s ease;
+}
+
+.success-close{
+width:100%;
+margin-top:4px;
+border:none;
+padding:13px;
+border-radius:14px;
+font-size:15px;
+font-weight:700;
+cursor:pointer;
+background:linear-gradient(145deg,#ff4b4b,#d60000);
+color:white;
+}
+
+@media(max-width:768px){
+.sos-button{
+width:142px;
+height:142px;
+font-size:28px;
+}
+
+.radar{
+width:210px;
+height:210px;
+}
+
+.sos-panel,
+.success-card{
+border-radius:24px;
+}
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+    <header class="header">
+        <h2>SOS Connect</h2>
+        <div id="userInfo">Detecting location...</div>
+      </header>
+
+<main class="main">
+  <div id="map"></div>
+
+  <div class="sos-wrapper">
+    <div class="radar"></div>
+    <button class="sos-button" id="sosButton">SOS</button>
+  </div>
+</main>
+
+<div class="fan-container" id="fanMenu">
+  <button class="fan-item profile" onclick="goProfile()">👤</button>
+  <button class="fan-item settings" onclick="goSettings()">⚙️</button>
+</div>
+
+<footer class="footer">
+  <button onclick="goHome()">🏠</button>
+  <button onclick="goVolunteers()">🤝</button>
+  <button id="menuButton">☰</button>
+</footer>
+
+</div>
+
+<div class="sos-stage" id="sosStage">
+  <div class="sos-fill" id="sosFill"></div>
+
+  <div class="sos-panel">
+    <div class="sos-title">🚨 SOS Activating</div>
+    <div class="sos-sub" id="sosSub">Keep holding to activate SOS</div>
+    <div class="sos-count" id="sosCount">3</div>
+
+    <div class="sos-details">
+      <div class="sos-details-title">Emergency contacts</div>
+      <div id="sosContactsPreview"></div>
+    </div>
+
+    <div class="sos-actions">
+      <button class="cancel-sos-btn" onclick="cancelSOS()">Cancel SOS</button>
+    </div>
+  </div>
+</div>
+
+<div class="success-modal" id="successModal">
+  <div class="success-card">
+    <div class="success-icon">✅</div>
+    <div class="success-title">SOS Sent Successfully</div>
+    <div class="success-sub" id="successSub">Your alert has been sent.</div>
+
+    <div class="success-box">
+      <div class="success-box-title">Alerted emergency contacts</div>
+      <div id="successContacts"></div>
+    </div>
+
+    <div class="success-box">
+      <div class="success-box-title">Nearby people alerted</div>
+      <div id="successNearby"></div>
+    </div>
+
+    <button class="success-close" onclick="closeSuccessModal()">Done</button>
+  </div>
+</div>
+
+<script>
+function applySavedTheme(){
+  const savedTheme = localStorage.getItem("theme") || "dark";
+  if(savedTheme === "light"){
+    document.body.classList.add("light-mode");
+  }
+}
+
+applySavedTheme();
+
+const savedUser = localStorage.getItem("user");
+if(!savedUser){
+  window.location.href = "login.html";
+}
+
+let map;
+let userLat;
+let userLon;
+
+let countdownInterval = null;
+let emergencyAudio = null;
+
+const user = JSON.parse(localStorage.getItem("user")) || { name:"User" };
+
+const sosButton = document.getElementById("sosButton");
+const sosStage = document.getElementById("sosStage");
+const sosFill = document.getElementById("sosFill");
+const sosCount = document.getElementById("sosCount");
+const sosSub = document.getElementById("sosSub");
+
+const sosContactsPreview = document.getElementById("sosContactsPreview");
+
+const successModal = document.getElementById("successModal");
+const successContacts = document.getElementById("successContacts");
+const successNearby = document.getElementById("successNearby");
+const successSub = document.getElementById("successSub");
+
+const menuButton = document.getElementById("menuButton");
+const fanMenu = document.getElementById("fanMenu");
+
+
+function initMap(){
+  map = L.map("map",{zoomControl:false}).setView([20.5937,78.9629],5);
+
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
+    attribution:"© OpenStreetMap"
+  }).addTo(map);
+
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(position=>{
+
+      userLat = position.coords.latitude;
+      userLon = position.coords.longitude;
+
+      map.setView([userLat,userLon],16);
+
+      L.marker([userLat,userLon]).addTo(map)
+      .bindPopup("You are here")
+      .openPopup();
+
+      detectPlace(userLat,userLon);
+
+    });
+  }
+}
+
+
+async function detectPlace(lat,lon){
+  try{
+    const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`;
+
+    const res = await fetch(url);
+    const data = await res.json();
+
+    const place =
+      data.address.city ||
+      data.address.town ||
+      data.address.village ||
+      data.address.state ||
+      "your area";
+
+    document.getElementById("userInfo").innerText =
+      "Hello " + (user.name || "User") + " | 📍 " + place;
+
+  }catch{
+    document.getElementById("userInfo").innerText =
+      "Hello " + (user.name || "User");
+  }
+}
+
+
+function getCountdownSeconds(){
+  const holdTime = localStorage.getItem("holdTime") || "3 seconds";
+  const parsed = parseInt(holdTime);
+  return Number.isNaN(parsed) ? 3 : parsed;
+}
+
+
+function getEmergencyContacts(){
+  return JSON.parse(localStorage.getItem("emergencyContacts")) || [];
+}
+
+
+function getNearbyPeople(){
+  return [
+    "2 nearby users within 1 km",
+    "1 volunteer network member nearby",
+    "Local area alert broadcast triggered"
+  ];
+}
+
+
+function playEmergencySound(){
+
+  const soundEnabled = localStorage.getItem("alertSound") === "on";
+
+  if(!soundEnabled) return;
+
+  if(!emergencyAudio){
+    emergencyAudio = new Audio("https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg");
+    emergencyAudio.loop = true;
+    emergencyAudio.volume = 0.75;
+  }
+
+  emergencyAudio.currentTime = 0;
+  emergencyAudio.play().catch(()=>{});
+}
+
+
+function stopEmergencySound(){
+  if(emergencyAudio){
+    emergencyAudio.pause();
+    emergencyAudio.currentTime = 0;
+  }
+}
+
+
+function renderContactsPreview(){
+
+  const contacts = getEmergencyContacts();
+
+  if(contacts.length === 0){
+    sosContactsPreview.innerHTML =
+    `<div class="sos-details-item">No emergency contacts added</div>`;
+    return;
+  }
+
+  sosContactsPreview.innerHTML = contacts.map(contact => `
+    <div class="sos-details-item">
+      ${contact.name} (${contact.relation})
+    </div>
+  `).join("");
+}
+
+
+
+function startSOS(){
+
+  const seconds = getCountdownSeconds();
+
+  let current = seconds;
+
+  document.body.classList.add("sos-active");
+  sosStage.classList.add("show");
+
+  sosSub.innerText = "Sending alert in";
+  sosCount.innerText = current;
+
+  renderContactsPreview();
+
+  sosFill.style.setProperty("--fill-duration", `${seconds}s`);
+
+  playEmergencySound();
+
+
+  countdownInterval = setInterval(()=>{
+
+    current--;
+
+    if(current > 0){
+
+      sosCount.innerText = current;
+
+    }else{
+
+      clearInterval(countdownInterval);
+      countdownInterval = null;
+
+      completeSOS();
+
+    }
+
+  },1000);
+
+}
+
+
+function cancelSOS(){
+
+  if(countdownInterval){
+    clearInterval(countdownInterval);
+    countdownInterval = null;
+  }
+
+  stopEmergencySound();
+
+  document.body.classList.remove("sos-active");
+  sosStage.classList.remove("show");
+
+}
+
+
+
+function completeSOS(){
+
+  stopEmergencySound();
+
+  document.body.classList.remove("sos-active");
+  sosStage.classList.remove("show");
+
+  const contacts = getEmergencyContacts();
+  const nearby = getNearbyPeople();
+
+  successContacts.innerHTML = contacts.length
+    ? contacts.map(c => `<div class="success-item">${c.name}</div>`).join("")
+    : `<div class="success-item">No emergency contacts added</div>`;
+
+  successNearby.innerHTML = nearby.map(n =>
+    `<div class="success-item">${n}</div>`
+  ).join("");
+
+  successSub.innerText =
+    `User: ${user.name || "User"} ${
+      userLat ? `• ${userLat.toFixed(5)}, ${userLon.toFixed(5)}` : ""
+    }`;
+
+  successModal.classList.add("show");
+
+}
+
+
+function closeSuccessModal(){
+  successModal.classList.remove("show");
+}
+
+
+function goHome(){
+  window.location.href="index.html";
+}
+
+function goVolunteers(){
+  window.location.href="volunteers.html";
+}
+
+function goProfile(){
+  window.location.href="profile.html";
+}
+
+function goSettings(){
+  window.location.href="settings.html";
+}
+
+
+
+sosButton.addEventListener("click", startSOS);
+
+
+menuButton.addEventListener("click",()=>{
+  fanMenu.classList.toggle("active");
+});
+
+
+initMap();
+</script>
+</body>
+</html>
